@@ -1,57 +1,95 @@
-﻿using System.Xml.Linq;
-using System;
-using AutocrossWebScrape;
-using static AutocrossWebScrape.ReadingVar;
+﻿using System;
+using System.CodeDom.Compiler;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using CsvHelper;
+using CsvHelper.Configuration;
 
-namespace AutocrossWebScrape
-{
-    class Cache
-    {
+namespace AutocrossWebScrape {
+    public class Cache {
+        public string currentMonth = DateTime.Now.Month.ToString();            
+        public bool checkCache(string Name, string filePath) {
 
-        public static bool checkCache(ReadingVar Reading, int year) {
+            string tempStr = "";
 
-            String line = "";
-            String splitBy = ",";
-            String fileName = "Cache.csv";
-            FileReader fr = new FileReader(fileName);
-            BufferedReader br = new BufferedReader(fr);
-            string currentMonth = "11";
-
-        Console.WriteLine("Checking Cache...");
-
-        string tempMonth = br.readLine();
-        Console.WriteLine(tempMonth);
-
-                if (!tempMonth.Equals(currentMonth))
-                {
-                    return false;
+            foreach (string row in File.ReadLines(filePath)) {
+                foreach (string field in row.Split(',')) {
+                    if (!row.StartsWith(currentMonth)) break;
+                    if ((tempStr + ", " + field) == Name) return true;
+                    tempStr = field;
                 }
-
-                while ((line = br.readLine()) != null)
-                {
-                    string[] data = line.split(splitBy);
-                    int year1 = Int32.Parse(data[0]);
-                    string lName = data[1];
-                    string fName = data[2];
-
-                    if (Reading.name.Equals(lName + ", " + fName, StringComparison.InvariantCultureIgnoreCase) && year == year1)
-                    {
-                        int docSize1 = Int32.Parse(data[3]);
-                        int[] arrayAddress = new int[docSize1];
-
-                        for (int i = 0; i<docSize1; i++)
-                        {
-                            arrayAddress[i] = Int32.Parse(data[4 + i]);
-                        }
-                    Reading.docSize = docSize1;
-                    Reading.trNthChild[docSize1] = arrayAddress[docSize1]; 
-                        //Output data here.
-                        return true;
-                    }
-                }
-                Console.WriteLine("Name not in cache.");
-                
-            return false;
             }
+            return false;
+        }
+
+        public void AddToCache(List<string> addedString, string filePath) => File.AppendAllLines(filePath, addedString);
+
+        public void ClearCache(string filePath) => File.WriteAllText(filePath, "Month Accessed,Year,Last Name,First Name,Document Size,Results Address\n");
+        public void getValues() {
+
+        }
     }
 }
+
+
+        //    while ((line = br.readLine()) != null) {
+        //        string[] data = line.split(splitBy);
+        //        int year1 = Int32.Parse(data[0]);
+        //        string lName = data[1];
+        //        string fName = data[2];
+
+        //        if (Reading.Name.Equals(lName + ", " + fName, StringComparison.InvariantCultureIgnoreCase) && year == year1) {
+        //            int docSize1 = Int32.Parse(data[3]);
+        //            int[] arrayAddress = new int[docSize1];
+
+        //            for (int i = 0; i < docSize1; i++) {
+        //                arrayAddress[i] = Int32.Parse(data[4 + i]);
+        //            }
+        //            Reading.DocSize = docSize1;
+        //            Reading.TrNthChild[docSize1] = arrayAddress[docSize1];
+        //            //Output data here.
+        //            return true;
+        //        }
+        //    }
+        //    Console.WriteLine("Name not in cache.");
+
+        //    return false;
+        //}
+        //public static bool newCache(ReadingVar Reading) {
+        //    string cache = "Cache.csv";
+        //    string currentMonth = "11";
+
+        //    if (br.readLine().Equals(currentMonth)) return false;
+
+        //    try (CsvReader csvReader = new CsvReader(cache, CultureInfo.InvariantCulture)) {
+
+        //        tempWriter.append(Int32.Parse(currentMonth))
+        //              .append("\n")
+        //              .append(Int32.Parse(in.getYear()))
+        //              .append(',')
+        //              .append(Reading.getName().replaceAll("\\s+", ""))
+        //              .append(',')
+        //              .append(Integer.toString(Reading.getDocSize()))
+        //              .append(',');
+        //        for (int i = 0; i < Reading.DocSize; i++) {
+        //            tempWriter.append(Integer.toString(Reading.TrNthChild[i]))
+        //                      .append(',');
+        //        }
+        //        tempWriter.append("\n");
+        //        tempWriter.close();
+        //        Console.WriteLine("Added to Cache.");
+
+        //        tempWriter.close();
+        //        return true;
+        //    }
+
+        //catch (IOException e) {
+        //    }
+        //    return false;
+        //}
+
+
+//    }
+//}
+//}

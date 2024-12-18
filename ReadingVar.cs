@@ -1,119 +1,85 @@
 ﻿using System;
-using System.Linq;
 using System.Net.Http;
-using System.Xml.Linq;
-using Supremes;
-using Supremes.Fluent;
-using Supremes.Nodes;
+using HtmlAgilityPack;
+using static System.Net.Mime.MediaTypeNames;
 
-namespace AutocrossWebScrape
-{
-    public class ReadingVar
-    {
+namespace AutocrossWebScrape {
+    public class ReadingVar {
 
-        public string name { get; set; }
-        public Document[] selectedDocs { get; set; }
-        public int docSize { get; set; }
-        public int year { get; set; }
-        public int[] trNthChild { get; set; }
+        public string Name { get; set; }
+        public HtmlDocument[] SelectedDocs { get; set; }
+        public int DocSize { get; set; }
+        public int Year { get; set; }
+        public int[] TrNthChild { get; set; }
 
-        public void setYearDoc()
-        {
+        public void setYearDoc() {
             int currentYear = DateTime.Now.Year;
-            Document[] selectedDocs = new Document[12];
-            Document doc = null;
+            string url = null;
+            string tempUrl = null;
+            bool curYear = false;
 
-            if (year == currentYear) {
+            if (Year < (currentYear - 10) || Year > currentYear) {
+                Console.WriteLine("Year entered is invalid.");
+                return;
+            }
+            if (Year == currentYear) {
+                url = "https://www.texasscca.org/solo/results/";
+                curYear = true;
+            } else url = "https://www.texasscca.org/Solo/results/past-results/";
 
-                doc = Dcsoup.Parse("https://www.texasscca.org/solo/results/");
+            var httpClient = new HttpClient();
+            var html = httpClient.GetStringAsync(url).Result;
+            var htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(html);
 
-                for (int i = 1; i <= 10; i++) {
-                        if (i % 2 == 0)
-                        {
-                        Element link1 = doc.CreateElement("https://www.texasscca.org/Solo/2024/Results/2024-E" + i + "-Final.htm"); //even rows
-                        Console.WriteLine(link1.ToString());
-                            if (link1 != null)
-                            {
-                            Console.WriteLine(link1 + " was not null");
-                                string url = link1.Attr("href");
-                                selectedDocs[docSize] = Dcsoup.Parse(url);
-                                this.docSize++;
-                            }
-                        }
-                    if (i % 2 != 0) 
-                    {
-                        Element link = doc.CreateElement("https://www.texasscca.org/Solo/2024/Results/2024-E" + i + "-Final.htm"); // odd rows 
-                        Console.WriteLine(link.ToString());
-                        if (link != null)
-                        {
-                            Console.WriteLine(link + " was not null");
-                            string url = link.Attr("href");
-                            selectedDocs[docSize] = Dcsoup.Parse(url);
-                            this.docSize++;
-                        }
-                    }
-			    }
-			this.selectedDocs = selectedDocs;
-            this.docSize = docSize;
-                Console.WriteLine("DocSize = "+  this.docSize);
-		    }
-		if (year >= (currentYear - 10) && year < currentYear) {
-            doc = Dcsoup.Parse("https://www.texasscca.org/solo/results/past-results/");
+            for (int i = 1; i < 12; i++) {
+                if (htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"tablepress-300-" + (Year - 2000) + "R\"]/tbody/tr[" + i + "]") != null) DocSize++;
+            }
+            Console.WriteLine("DocSize is " + DocSize);
+            SelectedDocs = new HtmlDocument[DocSize];
 
-            for (int i = 1; i <= 10; i++) { // for loop to find the links from the year chosen
-                if (i % 2 == 0) {
-                    Element link1 = doc.Select("#tablepress-300-" + (year - 2000) + "R > tbody > tr.row-" + (i) + ".even > td.column-4 > a").First(); //even rows
-                    if (link1 != null) {
-                        String url = link1.Attr("href");
-                        selectedDocs[docSize] = Dcsoup.Parse(url);
-                        this.docSize++;
-                    }
-                }
-                if (i % 2 != 0) {
-                    Element link = doc.Select("#tablepress-300-" + (year - 2000) + "R > tbody > tr.row-" + (i) + ".odd > td.column-4 > a").First(); // odd rows
-                    if (link != null) {
-                        String url = link.Attr("href");
-                        selectedDocs[docSize] = Dcsoup.Parse(url);
-                        this.docSize++;
-                    }
+            for (int i = 1; i <= DocSize; i++) {
+                if (curYear == true) tempUrl = "https://www.texasscca.org/Solo/" + Year + "/Results/" + Year + "-E" + i + "-Final.htm";
+                else tempUrl = "https://www.texasscca.org/Solo/" + Year + "/past-results/" + Year + "-E" + i + "-Final.htm";
+                if (httpClient.GetStringAsync(tempUrl) != null) {
+                    html = httpClient.GetStringAsync(url).Result;
+                    htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(html);
+                    SelectedDocs[i - 1] = htmlDocument;
                 }
             }
         }
-        if (year < (currentYear - 10) || year > currentYear) {
-            Console.WriteLine("Year entered is invalid.");
+        public HtmlDocument[] getSelectedDocs() {
+            return SelectedDocs;
         }
+        public void setFindTrNthChild(int docSize) {
 
-        this.selectedDocs = selectedDocs;
-	}
-	public Document[] getSelectedDocs()
-{
-    return selectedDocs;
-}
-public void setFindTrNthChild(int docSize) {
-
-           
-    Console.WriteLine("DocSize = " + docSize);
-    int searchNum = 350;
+            int searchNum = 350;
             int[] trNthChild = new int[12];
-    
-    //21.7
-    for (int j = 0; j < docSize; j++) { // loop to locate row that contains name
-        for (int i = 0; i < searchNum; i++) {
+            string temp = "";
+            // "/html/body/a/table[2]/tbody/tr[" + i + "]/td[4]"
 
-            string temp = selectedDocs[j].CreateElement("/html/body/a/table[2]/tbody/tr[" + i + "]/td[4]").Text; // name locations
+            //21.7
+            for (int j = 0; j < docSize; j++) { // loop to locate row that contains name
+                    Console.WriteLine("Searching doc #" + j);
+                for (int i = 0; i < searchNum; i++) {
+                    // //*[@id=\"tablepress-300-" + (Year - 2000) + "R\"]/tbody/tr[" + i + "]
+                    // //*[@name=\"#top"]/tbody/tr[4]
+                   
 
-                    Console.WriteLine(temp);
-            if (temp.Equals(name, StringComparison.InvariantCultureIgnoreCase)) {
 
-                trNthChild[j] = i; // array for name addresses
-                searchNum = i + 100;
-                break;
+                    if (SelectedDocs[j].DocumentNode.SelectSingleNode("//*[@Name=\"#top\"]/tr["+ 2 +"]/td[4]").InnerText.Equals(Name, StringComparison.InvariantCultureIgnoreCase)) {
+                        Console.WriteLine("Name found on Doc #" + j);
+
+
+                        trNthChild[j] = i; // array for name addresses, correlates with each doc a name is found in. allows for easy lookup when displaying
+                        searchNum = i + 100;
+                        break;
+                    } else trNthChild[j] = -1; // assigns a -1 to the events not participated in
+                }
+                Console.WriteLine("Loading... (" + (j + 1) + "/" + docSize + ")");
             }
-            else trNthChild[j] = -1; // assigns a -1 to the events not participated in
+            TrNthChild = trNthChild;
         }
-        Console.WriteLine("Loading... (" + (j + 1) + "/" + docSize + ")");
-    }
-        this.trNthChild = trNthChild;
-}
     }
 }
