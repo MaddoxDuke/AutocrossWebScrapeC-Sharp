@@ -1,25 +1,52 @@
 ﻿using System;
+using System.Collections.Generic;
+using Supremes.Nodes;
+using System.Net;
+using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace AutocrossWebScrape {
     internal class Program {
         static void Main(string[] args) {
 
+            int currentMonth = DateTime.Now.Month;
             string cachePath = "C:\\Users\\Administrator\\Desktop\\Code\\AutocrossWebScrape\\Cache\\Cache.csv";
             ReadingVar Reading = new ReadingVar();
-            Reading.Name = "Neff, Bob";
-            Reading.Year = 2021;
+            Reading.Name = "Molyneux, Matthew";
+            Reading.Year = 2023;
+
+            string name = Reading.Name;
+            int year = Reading.Year;
 
             Cache c = new Cache();
 
-            //if (!c.checkCache(Reading.Name, cachePath)) {
-                // Console.WriteLine("Name found");
+            //if (c.checkCache(Reading, cachePath)) {
+            //    Console.WriteLine("Name found in Cache");
 
-                
+            //    Reading.setYearDoc(year);
+            //    Reading.TrNthChild = c.getTrNthChild(c.getRow(c.getIndex(), cachePath), Reading.DocSize);
+       
+            //    Run(Reading);
             //}
             //else {
-            Reading.setYearDoc();
-            Reading.setFindTrNthChild(Reading.DocSize);
-            Run(Reading);
+                Console.WriteLine("Name not found in Cache");
+                Reading.setYearDoc(year);
+                Reading.setTrNthChild(name);
+                Run(Reading);
+
+
+                string tempStr = currentMonth.ToString() + "," + year.ToString() + "," + Regex.Replace(name, @"\s+", "") + "," + Reading.DocSize.ToString() + ",";
+
+                for (int i = 0; i < Reading.TrNthChild.Length; i++) {
+                    tempStr += Reading.TrNthChild[i].ToString();
+                    if (i != Reading.TrNthChild.Length-1) tempStr += ",";
+                }
+
+                List<string> cacheString = new List<string> {
+                    tempStr
+                };
+
+                //c.AddToCache(cacheString, cachePath);
             //}
 
 
@@ -37,7 +64,7 @@ namespace AutocrossWebScrape {
 
                 int counter = 1;
 
-                while (Reading.TrNthChild[j] == -1) {
+                while (Reading.TrNthChild[j] == 0) {
                     eventCount++;
                     notParticipatedString += ((j + 1).ToString() + ", ");
 
@@ -47,29 +74,25 @@ namespace AutocrossWebScrape {
 
                 if (eventCount == Reading.DocSize) Console.WriteLine(Reading.Name + " did not participate in any events for the year " + Reading.Year);
 
-                if ((j == (Reading.DocSize - 1)) && Reading.TrNthChild[j] == -1) break;
+                if ((j == (Reading.DocSize - 1)) && Reading.TrNthChild[j] == 0) break;
 
-
-                string classLabel = Reading.getSelectedDocs()[j].CreateTextNode("body > a > table:nth-child(2) > tbody > tr:nth-child(" + Reading.TrNthChild[j] + ") > td:nth-child(2)").Text;
+                string classLabel = Reading.SelectedDocs[j].DocumentNode.SelectSingleNode("/html/body/a/table[2]/tbody/tr[" + Reading.TrNthChild[j] + "]/td[2]").InnerText;
 
                 Console.WriteLine("Class: " + classLabel);
 
                 for (int i = 7; i <= 9; i++) {
-                    Console.WriteLine("Run " + (counter) + ":" + Reading.getSelectedDocs()[j].CreateTextNode("table:nth-child(2) > tbody > tr:nth-child(" + Reading.TrNthChild[j] + ") > td:nth-child(" + i + ")").Text);
+                    Console.WriteLine("Run " + (counter) + ":" + Reading.SelectedDocs[j].DocumentNode.SelectSingleNode("/html/body/a/table[2]/tbody/tr[" + Reading.TrNthChild[j] + "]/td[" + i + "]").InnerText);
                     counter++;
 
-                    Console.WriteLine("Run " + (counter) + ": " + Reading.getSelectedDocs()[j].CreateTextNode("table:nth-child(2) > tbody > tr:nth-child(" + (Reading.TrNthChild[j] + 1) + ") > td:nth-child(" + i + ")").Text);// time results, second row.
+                    Console.WriteLine("Run " + (counter) + ": " + Reading.SelectedDocs[j].DocumentNode.SelectSingleNode("/html/body/a/table[2]/tbody/tr[" + (Reading.TrNthChild[j] + 1) + "]/td[" + i + "]").InnerText);// time results, second row.
                     counter++;
                 }
 
-                Console.WriteLine("Placement: " + Reading.getSelectedDocs()[j].CreateTextNode("table:nth-child(2) > tbody > tr:nth-child(" + Reading.TrNthChild[j] + ") > td:nth-child(1)"));
+                Console.WriteLine("Placement: " + Reading.SelectedDocs[j].DocumentNode.SelectSingleNode("/html/body/a/table[2]/tbody/tr[" + Reading.TrNthChild[j] + "]/td[1]").InnerText);
 
-                if (j == Reading.DocSize - 1) notParticipatedString = notParticipatedString.Substring(0, notParticipatedString.Length - 2);
+                if (j == Reading.DocSize - 1) notParticipatedString += j.ToString() ;
 
             }
-            for (int i = 0; i < Reading.TrNthChild.Length; i++) Console.WriteLine(Reading.TrNthChild[i]);
-            Console.ReadKey();
-
             return;
         }
     }
