@@ -7,7 +7,7 @@ namespace AutocrossWebScrape {
     public class Cache {
         public string currentMonth = DateTime.Now.Month.ToString();
         public int index = 0;
-        public bool checkCache(ReadingVar Reading, string filePath) {
+        public bool checkCache(ReadingModel Reading, string filePath) {
 
             string name = Regex.Replace(Reading.Name, @"\s+", "");
                 foreach (string row in File.ReadLines(filePath)) {

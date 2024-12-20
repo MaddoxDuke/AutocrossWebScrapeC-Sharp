@@ -182,11 +182,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cache.cs" />
+    <Compile Include="Controllers\ReadingController.cs" />
     <Compile Include="Models\CacheModel.cs" />
     <Compile Include="Models\ResultsModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReadingVar.cs" />
+    <Compile Include="Models\ReadingModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
